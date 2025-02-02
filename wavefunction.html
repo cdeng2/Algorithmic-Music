@@ -1,0 +1,68 @@
+<body></body>
+<script src="https://unpkg.com/tone"></script>
+<script src="https://cdn.jsdelivr.net/gh/netizenorg/netnet-standard-library/build/nn.min.js?v=1"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://algorithmicmusic.online/js/create-spectrum.js"></script>
+<script src="https://algorithmicmusic.online/js/create-waveform.js"></script>
+<script>
+/* global Tone, nn, d3, createWaveform, createSpectrum */
+/*
+  The example below assumes you've connected a [KORG nanoKONTROL](https://www.korg.com/us/products/computergear/nanokontrol2/) MIDI controller to your computer, and uses the first two knobs and sliders to control the parameters of the Phaser effect.
+
+  NOTE: this works on Chrome, but sadly not on Firefox
+*/
+
+const base_freq = 220
+const base_amp = 1
+const num_chl = 8
+const num_wav = num_chl + 1
+function partials () {
+    // generates wavefunction-like partials for Tone.Oscillator
+
+
+}
+
+const wave = createWaveform()
+const spec = createSpectrum({ range: [20, 7040] })
+const osc = new Tone.Oscillator({
+    frequency: base_freq,
+    type: 'custom',
+    partials: [1, 0, 0.25, 0, 0.125, 0, 0.25, 0, 1]
+})
+
+osc.toDestination()
+osc.connect(wave)
+
+// const effect = new Tone.Phaser()
+// osc.connect(effect)
+// effect.toDestination()
+// effect.connect(wave)
+
+function updateEffect (msg) {
+  // use the "Play" button on the controller (channel 41)
+  if (msg.chl === 41) { // to start/stop the Osc
+    if (msg.val === 127) osc.start()
+    else if (msg.val === 0) osc.stop()
+  }
+
+/*
+wavefunction takes in num of channels
+1 - num
+num of waves = num of channels + 1
+choose an initial freq
+do partial of waves
+  - set vals to sliders
+visualize current freq in osc
+make dict of partials channel num: val
+update when channel num is detected
+
+play 
+
+
+*/
+}
+
+// run the function every time we receive a new MIDI message
+nn.MIDI(updateEffect)
+
+</script>
