@@ -7,12 +7,14 @@
 <script>
 /* global Tone, nn, d3, createWaveform, createSpectrum */
 const piano = new Tone.Sampler({
-  baseUrl: 'https://tonejs.github.io/audio/salamander/',
+  baseUrl: '',
   urls: {
-    'C4': 'C4.mp3',
-    'D#4': 'Ds4.mp3',
-    'F#4': 'Fs4.mp3',
-    'A4': 'A4.mp3'
+    'C5': 'sounds/marth-speaks-cropped.mp3',
+    'C4':'sounds/dog-bar-cropped.mp3',
+    'A4': 'sounds/dog-bark-179915.mp3'
+    // 'D#4': 'Ds4.mp3',
+    // 'F#4': 'Fs4.mp3',
+    // 'A4': 'A4.mp3'
   },
   release: 1
 })
@@ -23,21 +25,43 @@ nn.create('label')
   .content('use the "q" through "i" keys to play the  sampler')
   .addTo('body')
 
+// const keyMap = {
+//   q: { note: 'C4', pressed: false },
+//   w: { note: 'D4', pressed: false },
+//   e: { note: 'E4', pressed: false },
+//   r: { note: 'F4', pressed: false },
+//   t: { note: 'G4', pressed: false },
+//   y: { note: 'A5', pressed: false },
+//   u: { note: 'B5', pressed: false },
+//   i: { note: 'C5', pressed: false }
+// }
+
 const keyMap = {
-  q: { note: 'C4', pressed: false },
-  w: { note: 'D4', pressed: false },
-  e: { note: 'E4', pressed: false },
-  r: { note: 'F4', pressed: false },
-  t: { note: 'G4', pressed: false },
-  y: { note: 'A5', pressed: false },
-  u: { note: 'B5', pressed: false },
-  i: { note: 'C5', pressed: false }
-}
+  a: { note: 'C4', pressed: false },
+  s: { note: 'D4', pressed: false },
+  d: { note: 'E4', pressed: false },
+  f: { note: 'F4', pressed: false },
+  g: { note: 'G4', pressed: false },
+  h: { note: 'A4', pressed: false },
+  j: { note: 'B4', pressed: false },
+  k: { note: 'C5', pressed: false },
+  
+  w: { note: 'C#4', pressed: false },
+  e: { note: 'D#4', pressed: false },
+  t: { note: 'F#4', pressed: false },
+  y: { note: 'G#4', pressed: false },
+  u: { note: 'A#4', pressed: false }
+};
 
 function attack (e) {
   const obj = keyMap[e.key]
   if (obj && !obj.pressed) {
-    piano.triggerAttack(obj.note)
+    offset = 0.2821208333333333
+    duration = 0.2741737676056338
+    // offset: 0.2821208333333333, duration: 0.2741737676056338
+    // piano.triggerAttack(obj.note, Tone.now(), 1, offset, duration)
+    piano.triggerAttack(obj.note, Tone.context.currentTime, 1)
+    // piano.start(Tone.now(), offset, duration)
     obj.pressed = true
   }
 }
