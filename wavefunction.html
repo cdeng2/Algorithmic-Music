@@ -13,37 +13,115 @@
 */
 
 const base_freq = 220
-const base_amp = 1
-const num_chl = 8
-const num_wav = num_chl + 1
-function partials () {
-    // generates wavefunction-like partials for Tone.Oscillator
+// const base_amp = 1
+// const num_chl = 8
+// const num_wav = num_chl + 1
+// function partials () {
+//     // generates wavefunction-like partials for Tone.Oscillator
 
 
-}
+// }
 
 const wave = createWaveform()
 const spec = createSpectrum({ range: [20, 7040] })
-const osc = new Tone.Oscillator({
-    frequency: base_freq,
-    type: 'custom',
-    partials: [1, 0, 0.25, 0, 0.125, 0, 0.25, 0, 1]
-})
 
-osc.toDestination()
-osc.connect(wave)
+const baseFreq = 440; // Base frequency (A3)
+const harmonics = [1, 2, 3, 4, 5]; // First 5 harmonics
+const gains = {}; // Store gain nodes
+const oscillators = {}; // Store oscillators
 
-// const effect = new Tone.Phaser()
-// osc.connect(effect)
-// effect.toDestination()
-// effect.connect(wave)
+// Create multiple oscillators for harmonics
+harmonics.forEach((multiplier, index) => {
+    const osc = new Tone.Oscillator({
+        frequency: baseFreq * multiplier,
+        type: "sine"
+    });
 
-function updateEffect (msg) {
-  // use the "Play" button on the controller (channel 41)
+    // Create gain node for amplitude control
+    const gain = new Tone.Gain(0); // Start with volume at 0
+    osc.connect(gain);
+    // osc.toDestination()
+    gain.toDestination(); // Send to output
+    gain.connect(wave)
+    gain.connect(spec)
+
+    // Store oscillator and gain node
+    oscillators[index] = osc;
+    gains[index] = gain;
+});
+
+// Function to start a specific harmonic
+function startHarmonic(index) {
+    if (oscillators[index]) {
+        oscillators[index].start();
+    }
+}
+
+// Function to stop a specific harmonic
+function stopHarmonic(index) {
+    if (oscillators[index]) {
+        oscillators[index].stop();
+    }
+}
+
+// Function to start all harmonics
+function startAll() {
+  console.log(oscillators)
+    Object.values(oscillators).forEach(osc => osc.start());
+}
+
+// Function to stop all harmonics
+function stopAll() {
+    Object.values(oscillators).forEach(osc => osc.stop());
+}
+
+// MIDI Control - Adjust Harmonic Amplitudes
+function updateEffect(msg) {
   if (msg.chl === 41) { // to start/stop the Osc
-    if (msg.val === 127) osc.start()
-    else if (msg.val === 0) osc.stop()
+    if (msg.val === 127) startAll()
+    else if (msg.val === 0) stopAll()
   }
+  if (msg.chl >= 0 && msg.chl <= harmonics.length-1) {
+      const harmonicIndex = msg.chl; // Map MIDI Channel 1-5 to harmonics 0-4
+      const newGain = msg.val / 127; // Scale MIDI value (0-127) to (0-1)
+      // const a = nn.map(msg.val, 1, 126, 1, 20)
+      // console.log(a)
+      // gain.set({ frequency: f })
+
+      // Set the gain value for the corresponding harmonic
+      // gains[harmonicIndex].gain.set({gain: newGain})
+      gains[harmonicIndex].gain.setValueAtTime(newGain, Tone.now())
+  }
+}
+
+nn.create('button')
+  .content('start')
+  .addTo('body')
+// Example usage:
+// startHarmonic(2); // Starts the 3rd harmonic (index 2)
+// stopHarmonic(0); // Stops the fundamental (index 0)
+// startAll(); // Starts all harmonics
+// stopAll(); // Stops all harmonics
+
+console.log('hi')
+// osc.connect(wave)
+// osc.connect(spec)
+
+// // const effect = new Tone.Phaser()
+// // osc.connect(effect)
+// // effect.toDestination()
+// // effect.connect(wave)
+
+// function updateEffect (msg) {
+//   // use the "Play" button on the controller (channel 41)
+//   if (msg.chl === 41) { // to start/stop the Osc
+//     if (msg.val === 127) osc.start()
+//     else if (msg.val === 0) osc.stop()
+//   }
+//   if (msg.chl == 1){
+//     const newPartials = [msg.val, 0, 0.25, 0, 0.125, 0, 0.25, 0, 1]
+//     osc.set({ partials: newPartials })
+//   }
 
 /*
 wavefunction takes in num of channels
@@ -60,7 +138,7 @@ play
 
 
 */
-}
+// }
 
 // run the function every time we receive a new MIDI message
 nn.MIDI(updateEffect)
