@@ -1,0 +1,49 @@
+<body></body>
+<script src="https://unpkg.com/tone"></script>
+<script src="https://cdn.jsdelivr.net/gh/netizenorg/netnet-standard-library/build/nn.min.js?v=1"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://algorithmicmusic.online/js/create-spectrum.js"></script>
+<script src="https://algorithmicmusic.online/js/create-waveform.js"></script>
+<script>
+/* global Tone, nn, d3, createWaveform, createSpectrum */
+/*
+  instead of passing the frequency and type as two separate arguments into the Oscillator's constructor, we could also pass an object with properties and values set, this [parameters object](https://tonejs.github.io/docs/15.0.4/interfaces/ToneOscillatorOptions.html) allows us to edit many of the Oscillator's properties.
+
+  below we're creating a "custom" wave type (as opposed to the built-in types like "sine", "square", "triangle" and "sawtooth") by specifying the amplitude (0-1) of the harmonic/overtones of our fundamental (which is 440 Hz)
+*/
+const osc = new Tone.Oscillator({
+  frequency: 440,
+  type: 'custom',
+  partials: [1, 0, 0.25, 0, 0.125, 0, 0.25, 0]
+}).toDestination()
+
+function play (e) {
+  if (e.chl === 41) {
+    if (e.val === 127) osc.start()
+    else osc.stop()
+  }
+}
+
+// function updatePartials (e) {
+//   if (e.chl >= 0 && e.chl < osc.partialCount) {
+//     const i = e.chl
+//     const p = [...osc.partials]
+//     p[i] = nn.map(e.val, 0, 127, 0, 1)
+//     osc.set({ partials: p })
+//   }
+// }
+
+
+
+const wave = createWaveform()
+const spec = createSpectrum({ range: [20, 7040] })
+osc.connect(wave)
+osc.connect(spec)
+
+
+nn.MIDI(updatePartials)
+nn.MIDI(play)
+
+
+
+</script>
