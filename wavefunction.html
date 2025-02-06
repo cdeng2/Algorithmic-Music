@@ -7,171 +7,43 @@
 <script>
 /* global Tone, nn, d3, createWaveform, createSpectrum */
 /*
-  The example below assumes you've connected a [KORG nanoKONTROL](https://www.korg.com/us/products/computergear/nanokontrol2/) MIDI controller to your computer, and uses the first two knobs and sliders to control the parameters of the Phaser effect.
+  instead of passing the frequency and type as two separate arguments into the Oscillator's constructor, we could also pass an object with properties and values set, this [parameters object](https://tonejs.github.io/docs/15.0.4/interfaces/ToneOscillatorOptions.html) allows us to edit many of the Oscillator's properties.
 
-  NOTE: this works on Chrome, but sadly not on Firefox
+  below we're creating a "custom" wave type (as opposed to the built-in types like "sine", "square", "triangle" and "sawtooth") by specifying the amplitude (0-1) of the harmonic/overtones of our fundamental (which is 440 Hz)
 */
+const osc = new Tone.Oscillator({
+  frequency: 440,
+  type: 'custom',
+  partials: [1, 0, 0.25, 0, 0.125, 0, 0.25, 0]
+}).toDestination()
+
+function play (e) {
+  if (e.chl === 41) {
+    if (e.val === 127) osc.start()
+    else osc.stop()
+  }
+}
+
+function updatePartials (e) {
+  if (e.chl >= 0 && e.chl < osc.partialCount) {
+    const i = e.chl
+    const p = [...osc.partials]
+    p[i] = nn.map(e.val, 0, 127, 0, 1)
+    osc.set({ partials: p })
+  }
+}
+
+
 
 const wave = createWaveform()
 const spec = createSpectrum({ range: [20, 7040] })
-const baseFreq = 440; // Base frequency (A3)
-const harmonics = [1, 2, 3, 4, 5]; // First 5 harmonics
-const gains = {}; // Store gain nodes
-const harmonicGains = new Array(harmonics.length).fill(0);
-const oscillators = {}; // Store oscillators
-let totalPotential = 1; // Initialize total potential at 1
+osc.connect(wave)
+osc.connect(spec)
 
-// Create multiple oscillators for harmonics
-harmonics.forEach((multiplier, index) => {
-    const osc = new Tone.Oscillator({
-        frequency: baseFreq * multiplier,
-        type: "sine"
-    });
 
-    // Create gain node for amplitude control
-    const gain = new Tone.Gain(0); // Start with volume at 0
-    osc.connect(gain);
-    // osc.toDestination()
-    gain.toDestination(); // Send to output
-    gain.connect(wave)
-    gain.connect(spec)
+nn.MIDI(updatePartials)
+nn.MIDI(play)
 
-    // Store oscillator and gain node
-    oscillators[index] = osc;
-    gains[index] = gain;
-});
 
-// Function to start a specific harmonic
-function startHarmonic(index) {
-    if (oscillators[index]) {
-        oscillators[index].start();
-    }
-}
-
-// Function to stop a specific harmonic
-function stopHarmonic(index) {
-    if (oscillators[index]) {
-        oscillators[index].stop();
-    }
-}
-
-// Function to start all harmonics
-function startAll() {
-  // console.log(oscillators)
-    Object.values(oscillators).forEach(osc => osc.start());
-}
-
-// Function to stop all harmonics
-function stopAll() {
-    Object.values(oscillators).forEach(osc => osc.stop());
-}
-
-// navigator.requestMIDIAccess().then((access) => {
-//   // Get lists of available MIDI controllers
-//   const inputs = access.inputs.values();
-//   const outputs = access.outputs.values();
-//   for inp in inputs
-// });
-
-function initializeMidiState(midiAccess) {
-    const inputs = midiAccess.inputs.values();
-    // console.log(inputs)
-    for (let input of inputs) {
-        // input.addEventListener("midimessage", updateEffect); // Listen for changes
-        if (input.chl === 1) {
-          console.log('works')
-        }
-    }
-}
-
-// MIDI Control - Adjust Harmonic Amplitudes
-// MIDI Control - Adjust Harmonic Amplitudes
-
-// function updateEffect(msg) {
-//     if (msg.chl >= 1 && msg.chl <= harmonics.length) {
-//         const harmonicIndex = msg.chl - 1; // Map MIDI Channel 1-5 to harmonics 0-4
-//         const newAmplitude = msg.val / 127; // Scale MIDI value (0-127) to (0-1)
-
-//         // Set the new amplitude for the current harmonic
-//         harmonicGains[harmonicIndex] = newAmplitude;
-
-//         // Recalculate all the gains based on totalPotential and the sum of previous gains
-//         let sumUsed = 0; // Tracks the sum of the amplitudes of the previous harmonics
-
-//         // Recalculate the gain for each harmonic
-//         for (let i = 0; i < harmonicGains.length; i++) {
-//             // Sum all the amplitudes up to the current index
-//             if (i < harmonicIndex) {
-//                 sumUsed += harmonicGains[i];
-//             }
-//             // Calculate the new gain for the current harmonic
-//             let newGain = totalPotential - sumUsed;
-//             // Ensure the gain is not negative
-//             if (newGain < 0) {
-//                 newGain = 0;
-//             }
-//             // Update the gain node with the recalculated gain
-//             gains[i].gain.setValueAtTime(newGain, Tone.now());
-//         }
-//     }
-// }
-
-function updateEffect(msg) {
-  if (msg.chl === 41) { // to start/stop the Osc
-    console.log('start?')
-    if (msg.val === 127) startAll()
-    else if (msg.val === 0) stopAll()
-  }
-  if (msg.chl >= 0 && msg.chl <= harmonics.length) {
-      const harmonicIndex = msg.chl; // Map MIDI Channel 1-5 to harmonics 0-4
-      let sumUsed = 0; // Track how much potential is used
-
-      // Calculate total used potential from sliders 0 to current
-      for (let i = 0; i < harmonicIndex; i++) {
-          sumUsed += (gains[i]?.gain.value || 0);
-      }
-
-      // Calculate new gain as total potential minus used sum
-      let newGain = totalPotential - (msg.val / 127) - sumUsed;
-
-      // Ensure gain is never below zero
-      if (newGain <= 0) newGain = 0
-
-      // Set the new gain for the harmonic
-      console.log(gains[0].gain.value, gains[1].gain.value, gains[2].gain.value)
-      gains[harmonicIndex].gain.setValueAtTime(newGain, Tone.now());
-  }
-}
-
-// function updateEffect(msg) {
-//   if (msg.chl === 41) { // to start/stop the Osc
-//     if (msg.val === 127) startAll()
-//     else if (msg.val === 0) stopAll()
-//   }
-//   if (msg.chl >= 0 && msg.chl <= harmonics.length-1) {
-//       const harmonicIndex = msg.chl; // Map MIDI Channel 1-5 to harmonics 0-4
-//       const newGain = msg.val / 127; // Scale MIDI value (0-127) to (0-1)
-//       // const a = nn.map(msg.val, 1, 126, 1, 20)
-//       // console.log(a)
-//       // gain.set({ frequency: f })
-
-//       // Set the gain value for the corresponding harmonic
-//       // gains[harmonicIndex].gain.set({gain: newGain})
-//       gains[harmonicIndex].gain.setValueAtTime(newGain, Tone.now())
-//   }
-// }
-
-nn.create('button')
-  .content('start')
-  .addTo('body')
-// Example usage:
-// startHarmonic(2); // Starts the 3rd harmonic (index 2)
-// stopHarmonic(0); // Stops the fundamental (index 0)
-// startAll(); // Starts all harmonics
-// stopAll(); // Stops all harmonics
-
-console.log('hi')
-navigator.requestMIDIAccess().then(initializeMidiState);
-nn.MIDI(updateEffect)
 
 </script>
