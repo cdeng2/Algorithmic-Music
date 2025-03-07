@@ -13,24 +13,31 @@
 */
 
 const synth = new Tone.PolySynth().toDestination()
+
 // collection of chords
 const chords = [
-  ['C4', 'E4', 'G4'],
-  ['E4', 'F#4', 'G#4']
+  ['E3', 'G#3', 'B3', 'D4'],
+  ['A3', 'C3', 'E3', 'A4']
 ]
 let lastSecond = -1 // this is to "gate" the conditional below
 let playedNote // we'll use this to keep track of the note we played
 let chordIndex = 0 // which chord in the collection
-let noteIndex = 0 // ******* which note in the chord (try each person setting a different noteIndex to start with)
+let noteIndex = 3 // ******* which note in the chord (try each person setting a different noteIndex to start with)
+let volumes = [0, 5]
+let volumeIndex = 0
 
 const wave = createWaveform()
 const spec = createSpectrum({ range: [20, 7040] })
 const osc = new Tone.Oscillator({
   frequency: 'A2',
   type: 'custom',
+  volume: -5,
+  // partials: [0, 0, 0, 0, 0, 0, 0, 0]
   partials: [0, 0, 0, 0, 0, 0, 0, 0]
 }).toDestination()
+const reverb = new Tone.Reverb(3).toDestination()
 
+// osc.connect(reverb)
 osc.connect(wave)
 osc.connect(spec)
 
@@ -63,7 +70,7 @@ function syncClock () {
   const d = new Date()
   const s = d.getSeconds() 
   // every 4 seconds switch chord
-  if (s % 4 === 0 && s !== lastSecond) {
+  if (s % 40 === 0 && s !== lastSecond) {
     chordIndex++
     lastSecond = s // this ensures it only updates once per second
 
@@ -72,6 +79,14 @@ function syncClock () {
     osc.set({frequency: note})
     console.log(chordIndex)
   } 
+
+  if (s % 10 === 0 && s !== lastSecond) {
+    lastSecond = s // this ensures it only updates once per second
+    volumeIndex ++
+    const vol_i = volumeIndex % volumes.length
+
+    osc.set({volume: volumes[vol_i]})
+  }
 }
   
 function attackNote () {
@@ -96,12 +111,9 @@ nn.create('button')
 osc.connect(wave)
 osc.connect(spec)
 
-
-
-
 nn.MIDI(updatePartials)
 nn.MIDI(play)
-nn.MIDI(updateFreq)
+// nn.MIDI(updateFreq)
 
 
 
