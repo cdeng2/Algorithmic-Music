@@ -22,6 +22,7 @@ let volumes = [0, 5]
 let volumeIndex = 0
 let timer = 0
 let otherlastsecond = -1 // this is to "gate" the conditional below
+let runReverb = false
 
 const wave = createWaveform()
 const spec = createSpectrum({ range: [20, 7040] })
@@ -65,6 +66,7 @@ function updatePartials (e) {
 function connectWithReverb() {
     osc.disconnect();
     osc.connect(reverb);
+    osc.toDestination()
 }
 
 // Function to bypass reverb and connect Oscillator → Destination
@@ -82,9 +84,10 @@ function syncClock () {
 
   // something to count the seconds
   if (s !== lastSecond){
+    // everything in here runs once per second
     lastSecond = s
     timer ++
-    connectWithReverb()
+    // connectWithReverb()
 
     // clock
     document.getElementById("time").textContent = "Time elapsed: " + timer + ' | Clock: ' + lastSecond;
@@ -100,12 +103,33 @@ function syncClock () {
     //   // console.log(chordIndex)
     // } 
 
-    // if (s % 10 === 0) {
-    //   volumeIndex ++
-    //   const vol_i = volumeIndex % volumes.length
+    // every 10 seconds mess with volume
+    if (s % 10 === 0) {
+      volumeIndex ++
+      const vol_i = volumeIndex % volumes.length
 
-    //   osc.set({volume: volumes[vol_i]})
-    // }
+      osc.set({volume: volumes[vol_i]})
+    }
+
+    // at 15 seconds add reverb
+    if (s === 15){
+      runReverb = true
+    }
+
+    // run reverb continuously (fun effect)
+    if (runReverb){
+      connectWithReverb()
+    }
+    else{
+      bypassReverb()
+    }
+    if (runReverb){
+      reverb.set({ wet: (s-10) /10 })
+    }
+    if (s === 59){
+      runReverb = false
+    }
+    
   }
 }
 
