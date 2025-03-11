@@ -7,13 +7,6 @@
 <script src="https://algorithmicmusic.online/js/create-spectrum.js"></script>
 <script src="https://algorithmicmusic.online/js/create-waveform.js"></script>
 <script>
-/* global Tone, nn, d3, createWaveform, createSpectrum */
-/*
-  instead of passing the frequency and type as two separate arguments into the Oscillator's constructor, we could also pass an object with properties and values set, this [parameters object](https://tonejs.github.io/docs/15.0.4/interfaces/ToneOscillatorOptions.html) allows us to edit many of the Oscillator's properties.
-
-  below we're creating a "custom" wave type (as opposed to the built-in types like "sine", "square", "triangle" and "sawtooth") by specifying the amplitude (0-1) of the harmonic/overtones of our fundamental (which is 440 Hz)
-*/
-
 const synth = new Tone.PolySynth().toDestination()
 
 // collection of chords
@@ -80,6 +73,7 @@ function bypassReverb() {
     osc.toDestination();
 }
 
+// osc.connect(reverb);
 function syncClock () {
   window.requestAnimationFrame(syncClock)
   const d = new Date()
@@ -90,48 +84,29 @@ function syncClock () {
   if (s !== lastSecond){
     lastSecond = s
     timer ++
+    connectWithReverb()
 
     // clock
     document.getElementById("time").textContent = "Time elapsed: " + timer + ' | Clock: ' + lastSecond;
-    // document.getElementById("time").textContent = "Clock: " + lastSecond;
-    // if (s != otherlastsecond){
-    //   otherlastsecond = s
-    //   timer ++
-    //   document.getElementById("time").textContent = "Time elapsed: " + timer;
-    // }
+
 
     // every 4 seconds switch chord
-    if (s % 4 === 0) {
-      chordIndex++
-      // lastSecond = s // this ensures it only updates once per second
+    // if (s % 4 === 0) {
+    //   chordIndex++
 
-      const ci = chordIndex % chords.length
-      const note = chords[ci][noteIndex]
-      osc.set({frequency: note})
-      // console.log(chordIndex)
-    } 
+    //   const ci = chordIndex % chords.length
+    //   const note = chords[ci][noteIndex]
+    //   osc.set({frequency: note})
+    //   // console.log(chordIndex)
+    // } 
 
-    if (s % 10 === 0) {
-      // lastSecond = s // this ensures it only updates once per second
-      volumeIndex ++
-      const vol_i = volumeIndex % volumes.length
+    // if (s % 10 === 0) {
+    //   volumeIndex ++
+    //   const vol_i = volumeIndex % volumes.length
 
-      osc.set({volume: volumes[vol_i]})
-    }
+    //   osc.set({volume: volumes[vol_i]})
+    // }
   }
-}
-  
-function attackNote () {
-  const ci = chordIndex % chords.length
-  const note = chords[ci][noteIndex]
-  // synth.triggerAttack(note)
-  console.log()
-  osc.set({frequency: note})
-  playedNote = note
-}
-  
-function releaseNote () {
-  // synth.triggerRelease(playedNote)
 }
 
 nn.create('button')
