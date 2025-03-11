@@ -33,14 +33,6 @@ let otherlastsecond = -1 // this is to "gate" the conditional below
 const wave = createWaveform()
 const spec = createSpectrum({ range: [20, 7040] })
 
-// const reverb = new Tone.Reverb(3).toDestination()
-// const osc = new Tone.Oscillator({
-//   frequency: 'A2',
-//   type: 'custom',
-//   volume: -5,
-//   // partials: [0, 0, 0, 0, 0, 0, 0, 0]
-//   partials: [0, 0, 0, 0, 0, 0, 0, 0]
-// }).toDestination(reverb)
 const osc = new Tone.Oscillator({
   frequency: 'A2',
   type: 'custom',
@@ -48,8 +40,8 @@ const osc = new Tone.Oscillator({
   // partials: [0, 0, 0, 0, 0, 0, 0, 0]
   partials: [0, 0, 0, 0, 0, 0, 0, 0]
 }).toDestination()
+const reverb = new Tone.Reverb(3).toDestination()
 
-// osc.connect(reverb)
 osc.connect(wave)
 osc.connect(spec)
 
@@ -77,6 +69,17 @@ function updatePartials (e) {
 //     }
 // }
 
+function connectWithReverb() {
+    osc.disconnect();
+    osc.connect(reverb);
+}
+
+// Function to bypass reverb and connect Oscillator → Destination
+function bypassReverb() {
+    osc.disconnect(); // Remove previous connections
+    osc.toDestination();
+}
+
 function syncClock () {
   window.requestAnimationFrame(syncClock)
   const d = new Date()
@@ -84,29 +87,37 @@ function syncClock () {
   console.log(s)
 
   // something to count the seconds
-  if (s != otherlastsecond){
-    otherlastsecond = s
+  if (s !== lastSecond){
+    lastSecond = s
     timer ++
-    document.getElementById("time").textContent = "Time elapsed: " + timer;
-  }
 
-  // every 4 seconds switch chord
-  if (s % 4 === 0 && s !== lastSecond) {
-    chordIndex++
-    lastSecond = s // this ensures it only updates once per second
+    // clock
+    document.getElementById("time").textContent = "Time elapsed: " + timer + ' | Clock: ' + lastSecond;
+    // document.getElementById("time").textContent = "Clock: " + lastSecond;
+    // if (s != otherlastsecond){
+    //   otherlastsecond = s
+    //   timer ++
+    //   document.getElementById("time").textContent = "Time elapsed: " + timer;
+    // }
 
-    const ci = chordIndex % chords.length
-    const note = chords[ci][noteIndex]
-    osc.set({frequency: note})
-    // console.log(chordIndex)
-  } 
+    // every 4 seconds switch chord
+    if (s % 4 === 0) {
+      chordIndex++
+      // lastSecond = s // this ensures it only updates once per second
 
-  if (s % 10 === 0 && s !== lastSecond) {
-    lastSecond = s // this ensures it only updates once per second
-    volumeIndex ++
-    const vol_i = volumeIndex % volumes.length
+      const ci = chordIndex % chords.length
+      const note = chords[ci][noteIndex]
+      osc.set({frequency: note})
+      // console.log(chordIndex)
+    } 
 
-    osc.set({volume: volumes[vol_i]})
+    if (s % 10 === 0) {
+      // lastSecond = s // this ensures it only updates once per second
+      volumeIndex ++
+      const vol_i = volumeIndex % volumes.length
+
+      osc.set({volume: volumes[vol_i]})
+    }
   }
 }
   
