@@ -87,7 +87,7 @@ function syncClock () {
     // everything in here runs once per second
     lastSecond = s
     timer ++
-    // connectWithReverb()
+    connectWithReverb()
 
     // clock
     document.getElementById("time").textContent = "Time elapsed: " + timer + ' | Clock: ' + lastSecond;
@@ -104,31 +104,32 @@ function syncClock () {
     // } 
 
     // every 10 seconds mess with volume
-    if (s % 10 === 0) {
-      volumeIndex ++
-      const vol_i = volumeIndex % volumes.length
+    // if (timer % 10 === 0) {
+    //   volumeIndex ++
+    //   const vol_i = volumeIndex % volumes.length
 
-      osc.set({volume: volumes[vol_i]})
-    }
+    //   osc.set({volume: volumes[vol_i]})
+    // }
 
-    // at 15 seconds add reverb
-    if (s === 15){
-      runReverb = true
-    }
+    // // at 15 seconds add reverb
+    // if (s === 15){
+    //   runReverb = true
+    // }
 
-    // run reverb continuously (fun effect)
-    if (runReverb){
-      connectWithReverb()
-    }
-    else{
-      bypassReverb()
-    }
-    if (runReverb){
-      reverb.set({ wet: (s-10) /10 })
-    }
-    if (s === 59){
-      runReverb = false
-    }
+    // // run reverb continuously (fun effect)
+    // if (runReverb){
+    //   connectWithReverb()
+    // }
+    // else{
+    //   bypassReverb()
+    // }
+    // if (true){
+    //   reverb.set({ wet: (16-timer) / 16 })
+    //   // console.log(reverb.wet.value + 'hi')
+    // }
+    // if (s === 59){
+    //   runReverb = false
+    // }
     
   }
 }
