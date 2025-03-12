@@ -10,19 +10,81 @@
 const synth = new Tone.PolySynth().toDestination()
 
 // collection of chords
-const chords = [
-  ['E3', 'G#3', 'B3', 'D4'],
-  ['A3', 'C3', 'E3', 'A4']
-]
+const intro_chords = [
+  ['C5', 'G4', 'E4', 'C3'],
+  ['E5', 'A5', 'A4', 'C3']
+];
+const odyssey_chords = [
+  ['C4', 'C4', 'C4', 'C3'], // whoever is idx = 1 has solo
+  ['C4', 'C4', 'C4', 'C3'],
+  ['C4', 'C4', 'C4', 'C3'],
+  ['G4', 'Eb5', 'F4', 'C3'],
+  ['C4', 'C4', 'C4', 'C3'], // whoever is idx = 1 has solo
+  ['C4', 'C4', 'C4', 'C3'],
+  ['C4', 'C4', 'C4', 'C3'],
+  ['F4', 'A5', 'F4', 'C3']
+];
+const crunchy_chords = [
+  ['D4', 'F4', 'A4'] // brandin is doing percussion
+];
+const crunchy_end_chord = [
+  ['A4', 'C4', 'E4', 'A3']
+];
+const bridge_chords = [
+  ['A5', 'E4', 'C4', 'A3'],
+  ['E5', 'C5', 'A4', 'F3'],
+  ['A5', 'E4', 'C4', 'A3'],
+  ['F5', 'C5', 'A4', 'F3'],
+  ['A5', 'E4', 'C4', 'A3'],
+  ['C6', 'G4', 'E4', 'C3'],
+  ['F5', 'C5', 'A4', 'F3'],
+  ['E5', 'D5', 'B4', 'G3']
+];
+const back_tg_chords = [
+ ['A5', 'E4', 'C4', 'A3'],
+ ['F5', 'C5', 'A4', 'F3'],
+ ['D5', 'A4', 'F4', 'D3'],
+ ['G5', 'D5', 'B4', 'G3'],
+ ['A5', 'E4', 'C4', 'A3'],
+ ['A5', 'D5', 'B4', 'A3'],
+ ['A5', 'E4', 'C4', 'A3'],
+ ['F5', 'D5', 'B4', 'A3']
+];
+const outro_chords = [
+ ['A5', 'E4', 'C4', 'A3'],
+ ['F5', 'D5', 'B4', 'A3'],
+ ['A5', 'E4', 'C4', 'A3'],
+ ['A5', 'D5', 'B4', 'A3'],
+ ['A5', 'E4', 'C4', 'A3'],
+ ['F5', 'D5', 'B4', 'A3'],
+ ['A5', 'E4', 'C4', 'A3'],
+ ['A5', 'E4', 'C4', 'A3']
+];
+
+const chord_time_stamps = [48, 64, 96, 100, 132, 164]
+let big_chord_index = 0
+const chord_collection = [
+  intro_chords,
+  odyssey_chords,
+  crunchy_chords,
+  crunchy_end_chord,
+  bridge_chords,
+  back_tg_chords,
+  outro_chords
+];
+
+
+let chords = intro_chords
 let lastSecond = -1 // this is to "gate" the conditional below
 let playedNote // we'll use this to keep track of the note we played
-let chordIndex = 0 // which chord in the collection
-let noteIndex = 3 // ******* which note in the chord (try each person setting a different noteIndex to start with)
+let chordIndex = 0 // which chord in the smaller collection
+let noteIndex = 0 // ******* which note in the chord (try each person setting a different noteIndex to start with)
 let volumes = [0, 5]
 let volumeIndex = 0
 let timer = 0
 let otherlastsecond = -1 // this is to "gate" the conditional below
 let runReverb = false
+let holding = false
 
 const wave = createWaveform()
 const spec = createSpectrum({ range: [20, 7040] })
@@ -46,6 +108,17 @@ function play (e) {
   }
 }
 
+function hold (e){
+  if (e.chl === 45 && e.val === 127){
+    holding = !holding
+    if (holding) {
+      osc.start(); 
+    } else {
+      osc.stop();
+    }
+  }
+}
+
 function updatePartials (e) {
   if (e.chl >= 0 && e.chl < osc.partialCount) {
     const i = e.chl
@@ -66,14 +139,18 @@ function updatePartials (e) {
 function connectWithReverb() {
     osc.disconnect();
     osc.connect(reverb);
-    osc.toDestination()
+    // osc.toDestination()
 }
 
 // Function to bypass reverb and connect Oscillator → Destination
-function bypassReverb() {
-    osc.disconnect(); // Remove previous connections
-    osc.toDestination();
-}
+// function bypassReverb() {
+//     osc.disconnect(); // Remove previous connections
+//     osc.toDestination();
+// }
+
+// function swapChords () {
+//   big_chord_index ++
+// }
 
 // osc.connect(reverb);
 function syncClock () {
@@ -92,16 +169,23 @@ function syncClock () {
     // clock
     document.getElementById("time").textContent = "Time elapsed: " + timer + ' | Clock: ' + lastSecond;
 
+    // swap big chords based on time stamps
+    if (chord_time_stamps.includes(timer)){
+      big_chord_index ++
+      chords = chord_collection[big_chord_index]
+      chordIndex = 0
+    }
 
     // every 4 seconds switch chord
-    // if (s % 4 === 0) {
-    //   chordIndex++
+    if (timer % 4 === 0) {
+      chordIndex++
 
-    //   const ci = chordIndex % chords.length
-    //   const note = chords[ci][noteIndex]
-    //   osc.set({frequency: note})
-    //   // console.log(chordIndex)
-    // } 
+      const ci = chordIndex % chords.length
+      const note = chords[ci][noteIndex]
+      console.log('pain' + note)
+      osc.set({frequency: note})
+      // console.log(chordIndex)
+    } 
 
     // every 10 seconds mess with volume
     // if (timer % 10 === 0) {
@@ -111,22 +195,14 @@ function syncClock () {
     //   osc.set({volume: volumes[vol_i]})
     // }
 
-    // // at 15 seconds add reverb
-    // if (s === 15){
-    //   runReverb = true
-    // }
-
-    // // run reverb continuously (fun effect)
-    // if (runReverb){
-    //   connectWithReverb()
-    // }
-    // else{
-    //   bypassReverb()
-    // }
-    // if (true){
-    //   reverb.set({ wet: (16-timer) / 16 })
-    //   // console.log(reverb.wet.value + 'hi')
-    // }
+    if (timer >= 48 && timer < 64){
+      console.log('hey why you running')
+      reverb.set({ wet: (64-timer) / 16 })
+      // console.log(reverb.wet.value + 'hi')
+    }
+    if (timer == 64){
+      reverb.set({ wet: 1 })
+    }
     // if (s === 59){
     //   runReverb = false
     // }
@@ -145,6 +221,7 @@ osc.connect(spec)
 
 nn.MIDI(updatePartials)
 nn.MIDI(play)
+nn.MIDI(hold)
 // nn.MIDI(updateFreq)
 
 
